@@ -1,0 +1,21 @@
+# Dependencias
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Archivos generados
+dist/
+build/
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Archivos del sistema
+.DS_Store
+
+# Archivos subidos por usuarios
+storage/uploads/
