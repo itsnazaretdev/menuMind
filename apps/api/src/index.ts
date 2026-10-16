@@ -2,7 +2,7 @@ import { askOllama } from "./ollama";
 import { extractMenu } from "./menu-extractor";
 import multipart from "@fastify/multipart";
 import { extractTextFromPdf } from "./pdf-reader";
-import { extractTextFromImage } from "./ocr-reader";
+import { extractTextFromImages } from "./ocr-reader";
 import { renderPdfPages } from "./pdf-renderer";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
@@ -114,12 +114,8 @@ const start = async () => {
           request.log.info("PDF sin texto suficiente. Iniciando OCR.");
 
           const images = await renderPdfPages(buffer);
-          const pageTexts: string[] = [];
 
-          for (const image of images) {
-            const pageText = await extractTextFromImage(image);
-            pageTexts.push(pageText);
-          }
+          const pageTexts = await extractTextFromImages(images);
 
           text = pageTexts.join("\n\n");
           extractionMethod = "ocr";
