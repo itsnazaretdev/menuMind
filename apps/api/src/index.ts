@@ -93,13 +93,14 @@ const start = async () => {
           }>;
         };
 
-        const restaurantName = body.restaurant?.trim().toLocaleLowerCase();
+        const restaurantName = body.restaurant?.trim();
 
         if (!restaurantName) {
           return reply.status(400).send({
             error: "El nombre del restaurante es obligatorio.",
           });
         }
+        const normalizedRestaurantName = restaurantName.toLocaleLowerCase("es");
 
         if (!Array.isArray(body.items) || body.items.length === 0) {
           return reply.status(400).send({
@@ -147,15 +148,26 @@ const start = async () => {
         }
 
         const menu = await prisma.$transaction(async (tx) => {
-          const restaurant = await tx.restaurant.upsert({
-            where: {
-              name: restaurantName,
-            },
-            update: {},
-            create: {
-              name: restaurantName,
+          const restaurants = await tx.restaurant.findMany({
+            select: {
+              id: true,
+              name: true,
             },
           });
+
+          const existingRestaurant = restaurants.find(
+            (r) =>
+              r.name.trim().toLocaleLowerCase("es") ===
+              normalizedRestaurantName,
+          );
+
+          const restaurant = existingRestaurant
+            ? existingRestaurant
+            : await tx.restaurant.create({
+                data: {
+                  name: restaurantName,
+                },
+              });
 
           const existingMenu = await tx.menu.findFirst({
             where: {
