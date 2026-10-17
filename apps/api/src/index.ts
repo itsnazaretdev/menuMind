@@ -93,19 +93,31 @@ const start = async () => {
           }>;
         };
 
+        const restaurantName = body.restaurant?.trim().toLocaleLowerCase();
+
+        if (!restaurantName) {
+          return reply.status(400).send({
+            error: "El nombre del restaurante es obligatorio.",
+          });
+        }
+
         if (!Array.isArray(body.items) || body.items.length === 0) {
           return reply.status(400).send({
             error: "La carta debe contener al menos un plato.",
           });
         }
 
-        const items = [];
+        const items: {
+          name: string;
+          category: string;
+          price: number | null;
+          sortOrder: number;
+        }[] = [];
 
         for (let i = 0; i < body.items.length; i++) {
           const item = body.items[i];
 
           const name = typeof item.name === "string" ? item.name.trim() : "";
-
           const category =
             typeof item.category === "string" ? item.category.trim() : "";
 
@@ -134,17 +146,57 @@ const start = async () => {
           });
         }
 
-        const menu = await prisma.menu.create({
-          data: {
-            restaurant: body.restaurant?.trim() || "Mi restaurante",
-            status: "confirmed",
-            items: {
-              create: items,
+        const menu = await prisma.$transaction(async (tx) => {
+          const restaurant = await tx.restaurant.upsert({
+            where: {
+              name: restaurantName,
             },
-          },
-          include: {
-            items: true,
-          },
+            update: {},
+            create: {
+              name: restaurantName,
+            },
+          });
+
+          const existingMenu = await tx.menu.findFirst({
+            where: {
+              restaurantId: restaurant.id,
+              title: "Carta principal",
+            },
+          });
+
+          if (existingMenu) {
+            return tx.menu.update({
+              where: {
+                id: existingMenu.id,
+              },
+              data: {
+                restaurant: restaurant.name,
+                status: "confirmed",
+                items: {
+                  deleteMany: {},
+                  create: items,
+                },
+              },
+              include: {
+                items: true,
+              },
+            });
+          }
+
+          return tx.menu.create({
+            data: {
+              restaurant: restaurant.name,
+              title: "Carta principal",
+              restaurantId: restaurant.id,
+              status: "confirmed",
+              items: {
+                create: items,
+              },
+            },
+            include: {
+              items: true,
+            },
+          });
         });
 
         return {

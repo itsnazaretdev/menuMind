@@ -13,6 +13,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [restaurantName, setRestaurantName] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [showModal, setShowModal] = useState(false);
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const selectedFile = event.target.files?.[0];
@@ -55,6 +58,14 @@ export default function Home() {
   }
 
   const handleConfirmMenu = async () => {
+    if (!restaurantName.trim()) {
+      setModalMessage(
+        "Escribe el nombre de tu restaurante antes de confirmar la carta.",
+      );
+      setShowModal(true);
+      return;
+    }
+
     try {
       const response = await fetch("http://localhost:3001/menus/save", {
         method: "POST",
@@ -62,7 +73,7 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          restaurant: "Mi restaurante",
+          restaurant: restaurantName,
           items: menuItems,
         }),
       });
@@ -73,11 +84,19 @@ export default function Home() {
         throw new Error(data.error || "No se pudo guardar la carta.");
       }
 
-      alert("¡Tu carta se ha guardado correctamente!");
+      setModalMessage("¡Tu carta se ha guardado correctamente!");
+      setShowModal(true);
+
       console.log("Carta guardada:", data.menuId);
     } catch (error) {
       console.error(error);
-      alert("No se pudo guardar la carta. Inténtalo de nuevo.");
+
+      setModalMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo guardar la carta. Inténtalo de nuevo.",
+      );
+      setShowModal(true);
     }
   };
 
@@ -115,6 +134,25 @@ export default function Home() {
 
         {/* Zona de subida */}
         <div className="mt-14 w-full max-w-4xl rounded-3xl border border-dashed border-[#CDB9A5] bg-[#FFFDFA] p-8 shadow-sm md:p-14">
+          {/* Nombre del restaurante */}
+          <div className="mb-8 text-left">
+            <label
+              htmlFor="restaurantName"
+              className="mb-2 block text-sm font-medium text-[#51443B]"
+            >
+              Nombre de tu restaurante
+            </label>
+
+            <input
+              id="restaurantName"
+              type="text"
+              value={restaurantName}
+              onChange={(e) => setRestaurantName(e.target.value)}
+              placeholder="Ej. La Taberna del Puerto"
+              className="w-full rounded-xl border border-[#E5D8CC] bg-white px-4 py-3 text-[#51443B] outline-none transition focus:border-[#B96F50]"
+            />
+          </div>
+
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F3E8DD] text-3xl">
             ↑
           </div>
@@ -127,7 +165,7 @@ export default function Home() {
 
           {/* Selector y procesamiento */}
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-[#B96F50] px-8 py-3 text-sm font-medium text-white transition hover:bg-[#9F5A3E]">
+            <label className="inline-flex w-56 cursor-pointer items-center justify-center rounded-full bg-[#B96F50] px-8 py-3 text-sm font-medium text-white transition hover:bg-[#9F5A3E]">
               {file ? "Cambiar archivo" : "Seleccionar mi carta"}
 
               <input
@@ -142,7 +180,7 @@ export default function Home() {
               type="button"
               onClick={handleUpload}
               disabled={!file || loading}
-              className="inline-flex items-center justify-center rounded-full bg-[#34352D] px-8 py-3 text-sm font-medium text-white transition hover:bg-[#55564B] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex w-56 items-center justify-center rounded-full bg-[#34352D] px-8 py-3 text-sm font-medium text-white transition hover:bg-[#55564B] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {loading ? "Procesando..." : "Procesar mi carta"}
             </button>
@@ -237,7 +275,7 @@ export default function Home() {
                               );
                               setMenuItems(updatedItems);
                             }}
-                            className="rounded-lg px-3 py-2 text-sm text-[#B96F50] hover:bg-[#F3E8DD] transition-colors"
+                            className="rounded-lg px-3 py-2 text-sm text-[#B96F50] transition-colors hover:bg-[#F3E8DD]"
                           >
                             Eliminar
                           </button>
@@ -307,6 +345,28 @@ export default function Home() {
       <footer className="border-t border-[#E8E1D6] px-6 py-7 text-center text-xs text-[#A49B8F]">
         © 2026 MenuMind · Hecho para restaurantes
       </footer>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#34352D]/50 px-6">
+          <div className="w-full max-w-md rounded-3xl bg-[#FFFDFA] p-8 text-center shadow-xl">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#F3E8DD] text-2xl text-[#B96F50]">
+              !
+            </div>
+
+            <h2 className="text-xl font-semibold text-[#34352D]">Aviso</h2>
+
+            <p className="mt-4 leading-7 text-[#77766D]">{modalMessage}</p>
+
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="mt-7 rounded-full bg-[#B96F50] px-8 py-3 text-sm font-medium text-white transition hover:bg-[#9F5A3E]"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
