@@ -1,12 +1,13 @@
+
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 
-export async function extractTextFromPdf(
+export async function extractTextPagesFromPdf(
   buffer: Buffer
-): Promise<string> {
+): Promise<string[]> {
   const pdf = await getDocument({
-  data: new Uint8Array(buffer),
-  useSystemFonts: true,
-}).promise;
+    data: new Uint8Array(buffer),
+    useSystemFonts: true,
+  }).promise;
 
   const pages: string[] = [];
 
@@ -55,5 +56,12 @@ export async function extractTextFromPdf(
     pages.push(pageText);
   }
 
+  return pages;
+}
+
+export async function extractTextFromPdf(
+  buffer: Buffer
+): Promise<string> {
+  const pages = await extractTextPagesFromPdf(buffer);
   return pages.join("\n\n").trim();
 }

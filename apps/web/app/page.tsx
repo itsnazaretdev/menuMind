@@ -220,6 +220,18 @@ export default function Home() {
                   </tbody>
                 </table>
               </div>
+
+              <div className="mt-8 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    alert("¡Tu carta ha sido confirmada!");
+                  }}
+                  className="rounded-xl bg-[#B96F50] px-8 py-3 font-medium text-white transition-colors hover:bg-[#A45E43]"
+                >
+                  Confirmar carta
+                </button>
+              </div>
             </section>
           )}
 

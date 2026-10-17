@@ -1,9 +1,10 @@
 import { askOllama } from "./ollama";
 import { extractMenu } from "./menu-extractor";
 import multipart from "@fastify/multipart";
-import { extractTextFromPdf } from "./pdf-reader";
-import { extractTextFromImages } from "./ocr-reader";
+import { MenuItem } from "./menu-extractor";
 import { renderPdfPages } from "./pdf-renderer";
+import { extractTextPagesFromPdf } from "./pdf-reader";
+import { extractMenuFromPage } from "./menu-extractor";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 
@@ -107,34 +108,62 @@ const start = async () => {
           });
         }
 
-        let text = await extractTextFromPdf(buffer);
-        let extractionMethod = "pdf-text";
+        const pageTexts = await extractTextPagesFromPdf(buffer);
+        const images = await renderPdfPages(buffer);
 
-        if (!text || text.length < 30) {
-          request.log.info("PDF sin texto suficiente. Iniciando OCR.");
-
-          const images = await renderPdfPages(buffer);
-
-          const pageTexts = await extractTextFromImages(images);
-
-          text = pageTexts.join("\n\n");
-          extractionMethod = "ocr";
+        if (pageTexts.length !== images.length) {
+          throw new Error(
+            "No coincide el número de páginas de texto e imágenes.",
+          );
         }
 
-        if (!text.trim()) {
-          return reply.status(422).send({
-            error: "No se ha podido reconocer texto en el PDF.",
-          });
+        const allItems: MenuItem[] = [];
+
+       
+for (let i = 0; i < images.length; i++) {
+  const firstLine = pageTexts[i]
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line.length > 0)
+    ?.toLowerCase() ?? "";
+
+  if (firstLine.startsWith("alérgenos")) {
+    request.log.info(
+      `Página ${i + 1} descartada: tabla de alérgenos.`
+    );
+    continue;
+  }
+
+  request.log.info(
+    `Analizando página ${i + 1} de ${images.length} con Gemma Vision...`
+  );
+
+
+          const result = await extractMenuFromPage(pageTexts[i], images[i]);
+          request.log.info({
+  page: i + 1,
+  extractedText: pageTexts[i],
+}, "TEXTO EXTRAÍDO DE LA PÁGINA");
+
+          request.log.info(
+            `Página ${i + 1}: ${result.pageType}, ${result.items.length} platos`,
+          );
+
+          if (result.pageType === "menu") {
+            allItems.push(...result.items);
+          }
         }
 
-        const menu = await extractMenu(text);
+        const menu = {
+          items: allItems,
+        };
 
         return {
           success: true,
-          extractedText: text,
-          extractionMethod,
+          extractionMethod: "vision-hybrid",
           menu,
         };
+
       } catch (error) {
         request.log.error(error);
 
