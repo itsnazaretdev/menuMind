@@ -54,6 +54,33 @@ export default function Home() {
     }
   }
 
+  const handleConfirmMenu = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/menus/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          restaurant: "Mi restaurante",
+          items: menuItems,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo guardar la carta.");
+      }
+
+      alert("¡Tu carta se ha guardado correctamente!");
+      console.log("Carta guardada:", data.menuId);
+    } catch (error) {
+      console.error(error);
+      alert("No se pudo guardar la carta. Inténtalo de nuevo.");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#F8F5EF] text-[#34352D]">
       {/* Navegación */}
@@ -224,9 +251,7 @@ export default function Home() {
               <div className="mt-8 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => {
-                    alert("¡Tu carta ha sido confirmada!");
-                  }}
+                  onClick={handleConfirmMenu}
                   className="rounded-xl bg-[#B96F50] px-8 py-3 font-medium text-white transition-colors hover:bg-[#A45E43]"
                 >
                   Confirmar carta

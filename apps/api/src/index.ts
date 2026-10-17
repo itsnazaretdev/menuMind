@@ -5,6 +5,7 @@ import { MenuItem } from "./menu-extractor";
 import { renderPdfPages } from "./pdf-renderer";
 import { extractTextPagesFromPdf } from "./pdf-reader";
 import { extractMenuFromPage } from "./menu-extractor";
+import { prisma } from "../../../packages/database/src/client";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 
@@ -81,6 +82,86 @@ const start = async () => {
       }
     });
 
+    app.post("/menus/save", async (request, reply) => {
+      try {
+        const body = request.body as {
+          restaurant?: string;
+          items?: Array<{
+            name?: unknown;
+            price?: unknown;
+            category?: unknown;
+          }>;
+        };
+
+        if (!Array.isArray(body.items) || body.items.length === 0) {
+          return reply.status(400).send({
+            error: "La carta debe contener al menos un plato.",
+          });
+        }
+
+        const items = [];
+
+        for (let i = 0; i < body.items.length; i++) {
+          const item = body.items[i];
+
+          const name = typeof item.name === "string" ? item.name.trim() : "";
+
+          const category =
+            typeof item.category === "string" ? item.category.trim() : "";
+
+          const price =
+            item.price === null || item.price === ""
+              ? null
+              : Number(item.price);
+
+          if (!name || !category) {
+            return reply.status(400).send({
+              error: `El plato ${i + 1} necesita nombre y categoría.`,
+            });
+          }
+
+          if (price !== null && (!Number.isFinite(price) || price < 0)) {
+            return reply.status(400).send({
+              error: `El precio del plato ${i + 1} no es válido.`,
+            });
+          }
+
+          items.push({
+            name,
+            category,
+            price,
+            sortOrder: i,
+          });
+        }
+
+        const menu = await prisma.menu.create({
+          data: {
+            restaurant: body.restaurant?.trim() || "Mi restaurante",
+            status: "confirmed",
+            items: {
+              create: items,
+            },
+          },
+          include: {
+            items: true,
+          },
+        });
+
+        return {
+          success: true,
+          message: "Carta guardada correctamente.",
+          menuId: menu.id,
+          menu,
+        };
+      } catch (error) {
+        request.log.error(error);
+
+        return reply.status(500).send({
+          error: "No se pudo guardar la carta.",
+        });
+      }
+    });
+
     app.post("/menus/upload-pdf", async (request, reply) => {
       try {
         const file = await request.file();
@@ -119,31 +200,31 @@ const start = async () => {
 
         const allItems: MenuItem[] = [];
 
-       
-for (let i = 0; i < images.length; i++) {
-  const firstLine = pageTexts[i]
-    .split("\n")
-    .map((line) => line.trim())
-    .find((line) => line.length > 0)
-    ?.toLowerCase() ?? "";
+        for (let i = 0; i < images.length; i++) {
+          const firstLine =
+            pageTexts[i]
+              .split("\n")
+              .map((line) => line.trim())
+              .find((line) => line.length > 0)
+              ?.toLowerCase() ?? "";
 
-  if (firstLine.startsWith("alérgenos")) {
-    request.log.info(
-      `Página ${i + 1} descartada: tabla de alérgenos.`
-    );
-    continue;
-  }
+          if (firstLine.startsWith("alérgenos")) {
+            request.log.info(`Página ${i + 1} descartada: tabla de alérgenos.`);
+            continue;
+          }
 
-  request.log.info(
-    `Analizando página ${i + 1} de ${images.length} con Gemma Vision...`
-  );
-
+          request.log.info(
+            `Analizando página ${i + 1} de ${images.length} con Gemma Vision...`,
+          );
 
           const result = await extractMenuFromPage(pageTexts[i], images[i]);
-          request.log.info({
-  page: i + 1,
-  extractedText: pageTexts[i],
-}, "TEXTO EXTRAÍDO DE LA PÁGINA");
+          request.log.info(
+            {
+              page: i + 1,
+              extractedText: pageTexts[i],
+            },
+            "TEXTO EXTRAÍDO DE LA PÁGINA",
+          );
 
           request.log.info(
             `Página ${i + 1}: ${result.pageType}, ${result.items.length} platos`,
@@ -163,7 +244,6 @@ for (let i = 0; i < images.length; i++) {
           extractionMethod: "vision-hybrid",
           menu,
         };
-
       } catch (error) {
         request.log.error(error);
 
