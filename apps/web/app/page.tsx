@@ -137,6 +137,7 @@ export default function Home() {
                       <th className="px-5 py-4">Plato</th>
                       <th className="px-5 py-4">Categoría</th>
                       <th className="px-5 py-4">Precio</th>
+                      <th className="px-5 py-4">Acciones</th>
                     </tr>
                   </thead>
 
@@ -146,7 +147,7 @@ export default function Home() {
                         <td className="px-5 py-4">
                           <input
                             type="text"
-                            value={item.name}
+                            value={item.name ?? ""}
                             onChange={(e) => {
                               const updatedItems = [...menuItems];
                               updatedItems[index] = {
@@ -159,8 +160,20 @@ export default function Home() {
                           />
                         </td>
 
-                        <td className="px-5 py-4 text-[#77766D]">
-                          {item.category}
+                        <td className="px-5 py-4">
+                          <input
+                            type="text"
+                            value={item.category ?? ""}
+                            onChange={(e) => {
+                              const updatedItems = [...menuItems];
+                              updatedItems[index] = {
+                                ...updatedItems[index],
+                                category: e.target.value,
+                              };
+                              setMenuItems(updatedItems);
+                            }}
+                            className="w-full rounded-lg border border-[#E6DED1] bg-transparent px-3 py-2 outline-none focus:border-[#B66B50]"
+                          />
                         </td>
 
                         <td className="px-5 py-4">
@@ -186,6 +199,21 @@ export default function Home() {
                             />
                             <span>€</span>
                           </div>
+                        </td>
+
+                        <td className="px-5 py-4 text-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updatedItems = menuItems.filter(
+                                (_, itemIndex) => itemIndex !== index,
+                              );
+                              setMenuItems(updatedItems);
+                            }}
+                            className="rounded-lg px-3 py-2 text-sm text-[#B96F50] hover:bg-[#F3E8DD] transition-colors"
+                          >
+                            Eliminar
+                          </button>
                         </td>
                       </tr>
                     ))}
