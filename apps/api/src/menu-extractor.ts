@@ -21,39 +21,36 @@ export async function extractMenuFromPage(
   text: string,
   image: Buffer
 ): Promise<PageExtraction> {
-  const prompt = `
+  
+
+
+const prompt = `
 Analiza esta página de una carta de restaurante.
 
 Dispones de dos fuentes:
 1. La imagen de la página, que muestra la distribución visual.
 2. El texto extraído del PDF, que contiene las palabras reconocidas.
 
-Tu tarea es identificar los platos reales de esta página.
+Identifica todos los platos reales de esta página.
 
-REGLAS IMPORTANTES:
-- Primero determina si la página es una carta, una tabla de alérgenos u otro contenido.
-- Si es una tabla de alérgenos, devuelve pageType "allergens" y una lista items vacía.
+REGLAS:
+- Si es una tabla de alérgenos, devuelve pageType "allergens" y items vacío.
 - Si no contiene platos, devuelve pageType "other".
 - Si contiene platos, devuelve pageType "menu".
-- Un plato puede ocupar varias líneas. Une todas las líneas que pertenezcan al mismo plato.
-- No conviertas ingredientes, acompañamientos ni continuaciones del nombre en platos independientes.
-- Utiliza la disposición visual para identificar dónde empieza y termina cada plato.
+- Un plato puede ocupar varias líneas. Une todas las líneas de su nombre.
+- Utiliza la imagen para identificar dónde empieza y termina cada plato.
 - Conserva los nombres originales completos.
 - No inventes nombres ni precios.
-- Si no puedes identificar el precio con seguridad, utiliza null.
-- Cada plato debe tener un único nombre completo y un único precio.
+- Si no puedes identificar un precio con seguridad, utiliza null.
+- Cada plato debe tener un único nombre y un único precio.
 - No incluyas descripciones adicionales.
-- Recorre toda la página de arriba abajo y de izquierda a derecha.
-- No omitas ningún plato por estar en la parte inferior de la página.
-- Utiliza los encabezados para identificar las categorías, por ejemplo: Entrantes, Platos del mar, Carnes y Pastelería.
+- Recorre toda la página de arriba abajo.
+- Los títulos como "Entrantes", "Cocina internacional" o "Nuestra cocina andaluza" son categorías, no platos.
+- Asigna cada plato al último título de sección que aparezca antes de él.
+- Mantén esa categoría hasta que aparezca otro título.
+- Si no identificas ninguna categoría, utiliza "Sin categoría".
 - Cada plato debe aparecer una sola vez.
-- Una línea que continúa el nombre de un plato debe incorporarse al nombre anterior, nunca convertirse en otro plato.
-- Si el precio aparece al final de una línea y el nombre continúa en la siguiente, conserva ambas partes en un único plato.
-- Si el precio aparece en una línea independiente, asígnalo al plato inmediatamente anterior cuando la disposición visual lo confirme.
-- No confundas los suplementos, notas, avisos o textos legales con platos.
-- Comprueba especialmente todos los platos de la última sección de la página.
-- Antes de devolver el JSON, revisa que no hayas omitido ningún plato visible.
-
+- No confundas suplementos, notas o avisos con platos.
 
 Devuelve exclusivamente JSON válido con esta estructura:
 {
@@ -61,8 +58,8 @@ Devuelve exclusivamente JSON válido con esta estructura:
   "items": [
     {
       "name": "Nombre completo del plato",
-      "price": 9.5,
-      "category": "Entrantes"
+      "price": 12.5,
+      "category": "Cocina internacional"
     }
   ]
 }
@@ -70,6 +67,7 @@ Devuelve exclusivamente JSON válido con esta estructura:
 TEXTO EXTRAÍDO DEL PDF:
 ${text}
 `;
+
 
   const response = await askOllama(prompt, [image]);
 
@@ -132,21 +130,16 @@ export async function extractMenu(
   text: string
 ): Promise<MenuExtraction> {
   const chunks = splitTextIntoChunks(text);
-  console.log("TEXTO EXTRAÍDO DEL PDF:");
-console.log(text);
+
   const allItems: MenuItem[] = [];
 
   for (let i = 0; i < chunks.length; i++) {
-    console.log(
-      `Procesando bloque ${i + 1} de ${chunks.length}...`
-    );
 
     const prompt = `
 Eres un experto en extracción de información de cartas de restaurantes.
 
 Extrae TODOS los platos que aparezcan en este fragmento de carta.
 
-REGLAS:
 REGLAS:
 - Extrae TODOS los platos que aparezcan en este fragmento.
 - Una línea nueva NO significa necesariamente un plato nuevo.
@@ -208,7 +201,6 @@ ${chunks[i]}
     allItems.push(...result.items);
   }
 
-  console.log(`Total de platos extraídos: ${allItems.length}`);
 
   return {
     items: allItems,

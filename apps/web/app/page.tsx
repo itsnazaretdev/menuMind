@@ -16,6 +16,8 @@ export default function Home() {
   const [restaurantName, setRestaurantName] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [translatedItems, setTranslatedItems] = useState<MenuItem[]>([]);
+  const [translating, setTranslating] = useState(false);
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const selectedFile = event.target.files?.[0];
@@ -86,17 +88,50 @@ export default function Home() {
 
       setModalMessage("¡Tu carta se ha guardado correctamente!");
       setShowModal(true);
-
-      console.log("Carta guardada:", data.menuId);
     } catch (error) {
-      console.error(error);
-
       setModalMessage(
         error instanceof Error
           ? error.message
           : "No se pudo guardar la carta. Inténtalo de nuevo.",
       );
       setShowModal(true);
+    }
+  };
+
+  const handleTranslateMenu = async () => {
+    setTranslating(true);
+
+    try {
+      const response = await fetch("http://localhost:3001/menus/translate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: menuItems,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo traducir la carta.");
+      }
+
+      setTranslatedItems(data.items);
+      setModalMessage("¡Tu carta se ha traducido al inglés correctamente!");
+      setShowModal(true);
+    } catch (error) {
+      console.error("Error al traducir:", error);
+
+      setModalMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo traducir la carta.",
+      );
+      setShowModal(true);
+    } finally {
+      setTranslating(false);
     }
   };
 
@@ -186,6 +221,7 @@ export default function Home() {
             </button>
           </div>
 
+          {/* Revisión de la carta */}
           {menuItems.length > 0 && (
             <section className="mx-auto mt-12 w-full max-w-3xl">
               <h2 className="mb-2 text-2xl font-semibold">Revisa tu carta</h2>
@@ -286,6 +322,50 @@ export default function Home() {
                 </table>
               </div>
 
+              {/* Botón de traducción: fuera de la tabla */}
+              <div className="mt-6 text-center">
+                <button
+                  type="button"
+                  onClick={handleTranslateMenu}
+                  disabled={translating}
+                  className="rounded-full bg-[#B96F50] px-8 py-3 text-sm font-medium text-white transition hover:bg-[#9F5A3E] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {translating ? "Traduciendo..." : "Traducir carta al inglés"}
+                </button>
+              </div>
+
+              {/* Carta traducida */}
+              {translatedItems.length > 0 && (
+                <div className="mt-10 rounded-2xl border border-[#E6DED1] bg-[#FFFDFA] p-6">
+                  <h2 className="mb-5 text-xl font-semibold text-[#34352D]">
+                    Tu carta en inglés
+                  </h2>
+
+                  <div className="space-y-4">
+                    {translatedItems.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between gap-4 border-b border-[#E6DED1] pb-4"
+                      >
+                        <div>
+                          <p className="font-medium text-[#34352D]">
+                            {item.name}
+                          </p>
+                          <p className="mt-1 text-sm text-[#77766D]">
+                            {item.category}
+                          </p>
+                        </div>
+
+                        <span className="shrink-0 text-[#34352D]">
+                          {item.price !== null ? `${item.price} €` : ""}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Confirmar carta */}
               <div className="mt-8 flex justify-end">
                 <button
                   type="button"
@@ -346,6 +426,7 @@ export default function Home() {
         © 2026 MenuMind · Hecho para restaurantes
       </footer>
 
+      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#34352D]/50 px-6">
           <div className="w-full max-w-md rounded-3xl bg-[#FFFDFA] p-8 text-center shadow-xl">

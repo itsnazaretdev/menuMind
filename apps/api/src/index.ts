@@ -282,13 +282,6 @@ const start = async () => {
           );
 
           const result = await extractMenuFromPage(pageTexts[i], images[i]);
-          request.log.info(
-            {
-              page: i + 1,
-              extractedText: pageTexts[i],
-            },
-            "TEXTO EXTRAÍDO DE LA PÁGINA",
-          );
 
           request.log.info(
             `Página ${i + 1}: ${result.pageType}, ${result.items.length} platos`,
@@ -313,6 +306,143 @@ const start = async () => {
 
         return reply.status(500).send({
           error: "Error procesando el PDF",
+        });
+      }
+    });
+
+    app.post("/menus/translate", async (request, reply) => {
+      try {
+        const body = request.body as {
+          items?: {
+            name: string;
+            category: string;
+            price: number | null;
+          }[];
+        };
+
+        if (!body.items || body.items.length === 0) {
+          return reply.status(400).send({
+            error: "No hay platos para traducir.",
+          });
+        }
+
+        const prompt = `
+You are a professional translator specializing in Spanish gastronomy and restaurant menus.
+
+Translate the following Spanish menu into natural, accurate English.
+
+RULES FOR DISH NAMES:
+- Translate the dish names into clear, natural English.
+- Preserve all ingredients, cooking methods and important characteristics.
+- Translate descriptions of ingredients, not invent new ones.
+- Do not add marketing language or extra descriptions.
+- Do not repeat the category inside the dish name.
+- You MUST translate the complete dish name into English.
+- Never return a dish name entirely or mostly in Spanish.
+- Translate ingredient names, preparation methods and descriptions whenever an English equivalent exists.
+- Preserve geographical names, but translate all descriptive words surrounding them.
+- Preserve traditional Spanish dish names only when they have no natural English equivalent. Always translate their ingredients and descriptions.
+- Apply the same translation rules to every item, including the first items in the input.
+- Never leave a dish name untranslated simply because it contains a Spanish culinary term.
+
+RULES FOR CATEGORIES:
+- Translate each category independently according to its actual meaning.
+- Never use a generic category for every dish.
+- Never invent a category.
+- Examples:
+  "Entrantes" -> "Starters"
+  "Ensaladas" -> "Salads"
+  "Sopas" -> "Soups"
+  "Pescados" -> "Fish"
+  "Carnes" -> "Meat"
+  "Postres" -> "Desserts"
+  "Bebidas" -> "Drinks"
+  "Platos principales" -> "Main Courses"
+- If a category is already in English, keep it.
+
+
+PRICES:
+- Do not translate, modify or invent prices.
+- Prices will be preserved by the application.
+
+OUTPUT:
+- Translate EVERY item in the input array, without exception.
+- Do not omit, merge, combine or split any dishes.
+- Translate each input item individually, in its original position.
+- Before returning the JSON, verify that the number of output items exactly matches the number of input items.
+- Preserve the original order.
+- Return valid JSON only.
+- Do not include markdown, explanations or text outside the JSON.
+
+Required JSON format:
+{
+  "items": [
+    {
+      "name": "Translated dish name",
+      "category": "Translated category"
+    }
+  ]
+}
+
+Original menu:
+${JSON.stringify(body.items)}
+`;
+
+        const translatedItems = [];
+
+        const batchSize = 3;
+
+        for (let i = 0; i < body.items.length; i += batchSize) {
+          const batch = body.items.slice(i, i + batchSize);
+
+          const batchPrompt =
+            prompt.replace(JSON.stringify(body.items), JSON.stringify(batch)) +
+            `
+
+IMPORTANT:
+Translate all ${batch.length} dishes in this batch.
+Do not leave any dish name in Spanish.
+Return exactly ${batch.length} translated items.
+`;
+
+          const result = await askOllama(batchPrompt);
+
+          const cleanResult = result
+            .replace(/```json/g, "")
+            .replace(/```/g, "")
+            .trim();
+
+          const parsed = JSON.parse(cleanResult);
+
+          if (
+            !Array.isArray(parsed.items) ||
+            parsed.items.length !== batch.length
+          ) {
+            throw new Error(
+              `Error traduciendo el grupo que empieza en el plato ${i + 1}.`,
+            );
+          }
+
+          const translatedBatch = parsed.items.map(
+            (item: { name: string; category: string }, index: number) => ({
+              name: item.name,
+              category: item.category,
+              price: batch[index].price,
+            }),
+          );
+
+          translatedItems.push(...translatedBatch);
+        }
+
+        return reply.send({
+          success: true,
+          items: translatedItems,
+        });
+      } catch (error) {
+        request.log.error(error, "Error al traducir la carta");
+
+        return reply.status(500).send({
+          error: "No se pudo traducir la carta.",
         });
       }
     });

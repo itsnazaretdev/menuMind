@@ -1,0 +1,17 @@
+POST http://localhost:3001/menus/translate
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "name": "Croquetas caseras de jamón",
+      "category": "Entrantes",
+      "price": 12.5
+    },
+    {
+      "name": "Tortilla de patatas",
+      "category": "Platos principales",
+      "price": 10
+    }
+  ]
+}
