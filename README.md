@@ -16,7 +16,7 @@ The owner-facing interface is in Spanish, because it's designed first for restau
 2. **Extract**: each page is rendered as an image and its text layer is read with pdf.js. Both are sent to Gemma 3 4B, which identifies dishes, categories and prices. Allergen tables are skipped.
 3. **Review**: every extracted dish appears in an editable table, where names, categories and prices can be fixed and wrong entries removed.
 4. **Translate**: Gemma translates dish names and categories into English, in small batches. Prices are never sent back through the model.
-5. **Publish**: the menu is saved and gets a public page with a Spanish/English toggle and a QR code that points to it.
+5. **Publish**: the menu is saved as the restaurant's own public page, with a Spanish/English toggle. The page also shows a QR code pointing to it, meant to be printed and placed on the tables so customers can open the menu from their phones.
 
 ## Tech stack
 
@@ -93,6 +93,7 @@ To scan the QR code from a phone, both devices must be on the same network:
 
 - Only PDF menus are supported, and extraction works best with PDFs that have selectable text.
 - A saved menu can't be edited yet; changing a dish means uploading the menu again.
+- The QR code is shown at the bottom of the public menu page; there is no download or print option yet.
 - Translation is Spanish → English only.
 - The owner interface is available in Spanish only.
 - The API URLs are hardcoded for local development.
@@ -102,6 +103,7 @@ To scan the QR code from a phone, both devices must be on the same network:
 
 - Accept photos of printed menus, not only PDFs.
 - Edit dishes and prices directly on a saved menu.
+- A "download / print QR" option for the restaurant, separate from the customer-facing menu.
 - OCR fallback for scanned PDFs.
 - Internationalize the owner interface (i18n), so restaurants outside Spain can use it, and translate menus into more languages.
 - Translate each category once, so the same section always gets the same English name.
