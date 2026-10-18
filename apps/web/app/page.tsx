@@ -19,6 +19,14 @@ export default function Home() {
   const [translatedItems, setTranslatedItems] = useState<MenuItem[]>([]);
   const [translating, setTranslating] = useState(false);
 
+  // Any change to the Spanish items makes the previous translation stale:
+  // translations are matched by position, so we clear them to avoid saving
+  // an English name on the wrong dish.
+  function updateMenuItems(updatedItems: MenuItem[]) {
+    setMenuItems(updatedItems);
+    setTranslatedItems([]);
+  }
+
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const selectedFile = event.target.files?.[0];
 
@@ -49,7 +57,7 @@ export default function Home() {
         throw new Error(data.error || "Error al procesar el archivo");
       }
 
-      setMenuItems(data.menu.items);
+      updateMenuItems(data.menu.items);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Ha ocurrido un error inesperado.",
@@ -261,7 +269,7 @@ body: JSON.stringify({
                                 ...updatedItems[index],
                                 name: e.target.value,
                               };
-                              setMenuItems(updatedItems);
+                              updateMenuItems(updatedItems);
                             }}
                             className="w-full rounded-lg border border-[#E6DED1] bg-transparent px-3 py-2 outline-none focus:border-[#B66B50]"
                           />
@@ -277,7 +285,7 @@ body: JSON.stringify({
                                 ...updatedItems[index],
                                 category: e.target.value,
                               };
-                              setMenuItems(updatedItems);
+                              updateMenuItems(updatedItems);
                             }}
                             className="w-full rounded-lg border border-[#E6DED1] bg-transparent px-3 py-2 outline-none focus:border-[#B66B50]"
                           />
@@ -300,7 +308,7 @@ body: JSON.stringify({
                                       ? null
                                       : Number(e.target.value),
                                 };
-                                setMenuItems(updatedItems);
+                                updateMenuItems(updatedItems);
                               }}
                               className="w-24 rounded-lg border border-[#E6DED1] bg-transparent px-3 py-2 outline-none focus:border-[#B66B50]"
                             />
@@ -315,7 +323,7 @@ body: JSON.stringify({
                               const updatedItems = menuItems.filter(
                                 (_, itemIndex) => itemIndex !== index,
                               );
-                              setMenuItems(updatedItems);
+                              updateMenuItems(updatedItems);
                             }}
                             className="rounded-lg px-3 py-2 text-sm text-[#B96F50] transition-colors hover:bg-[#F3E8DD]"
                           >
