@@ -226,6 +226,44 @@ const start = async () => {
       }
     });
 
+
+app.get("/menus/:menuId", async (request, reply) => {
+  try {
+    const { menuId } = request.params as { menuId: string };
+
+    const menu = await prisma.menu.findUnique({
+      where: {
+        id: menuId,
+      },
+      include: {
+        items: {
+          orderBy: {
+            sortOrder: "asc",
+          },
+        },
+      },
+    });
+
+    if (!menu || menu.status !== "confirmed") {
+      return reply.status(404).send({
+        error: "No se ha encontrado esta carta.",
+      });
+    }
+
+    return {
+      success: true,
+      menu,
+    };
+  } catch (error) {
+    request.log.error(error, "Error al recuperar la carta");
+
+    return reply.status(500).send({
+      error: "No se pudo recuperar la carta.",
+    });
+  }
+});
+
+
     app.post("/menus/upload-pdf", async (request, reply) => {
       try {
         const file = await request.file();

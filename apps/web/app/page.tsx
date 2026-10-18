@@ -335,52 +335,51 @@ export default function Home() {
               </div>
 
               {/* Carta traducida */}
-              
-{/* Carta traducida */}
-{translatedItems.length > 0 && (
-  <div className="mt-10">
-    <h2 className="mb-2 text-2xl font-semibold">
-      Tu carta en inglés
-    </h2>
 
-    <p className="mb-6 text-sm text-[#77766D]">
-      Así verán tus clientes la carta traducida.
-    </p>
+              {/* Carta traducida */}
+              {translatedItems.length > 0 && (
+                <div className="mt-10">
+                  <h2 className="mb-2 text-2xl font-semibold">
+                    Tu carta en inglés
+                  </h2>
 
-    <div className="overflow-x-auto rounded-2xl border border-[#E6DED1] bg-white">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-[#F1ECE3]">
-          <tr>
-            <th className="px-5 py-4">Dish</th>
-            <th className="px-5 py-4">Category</th>
-            <th className="px-5 py-4">Price</th>
-          </tr>
-        </thead>
+                  <p className="mb-6 text-sm text-[#77766D]">
+                    Así verán tus clientes la carta traducida.
+                  </p>
 
-        <tbody>
-          {translatedItems.map((item, index) => (
-            <tr key={index} className="border-t border-[#E6DED1]">
-              <td className="px-5 py-4 font-medium">
-                {item.name}
-              </td>
+                  <div className="overflow-x-auto rounded-2xl border border-[#E6DED1] bg-white">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-[#F1ECE3]">
+                        <tr>
+                          <th className="px-5 py-4">Dish</th>
+                          <th className="px-5 py-4">Category</th>
+                          <th className="px-5 py-4">Price</th>
+                        </tr>
+                      </thead>
 
-              <td className="px-5 py-4 text-[#77766D]">
-                {item.category}
-              </td>
+                      <tbody>
+                        {translatedItems.map((item, index) => (
+                          <tr key={index} className="border-t border-[#E6DED1]">
+                            <td className="px-5 py-4 font-medium">
+                              {item.name}
+                            </td>
 
-              <td className="whitespace-nowrap px-5 py-4">
-                {item.price !== null && item.price !== undefined
-                  ? `${item.price} €`
-                  : ""}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
+                            <td className="px-5 py-4 text-[#77766D]">
+                              {item.category}
+                            </td>
 
+                            <td className="whitespace-nowrap px-5 py-4">
+                              {item.price !== null && item.price !== undefined
+                                ? `${item.price} €`
+                                : ""}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
               {/* Confirmar carta */}
               <div className="mt-8 flex justify-end">
