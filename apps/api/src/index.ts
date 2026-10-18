@@ -1,5 +1,4 @@
 import { askOllama } from "./ollama";
-import { extractMenu } from "./menu-extractor";
 import multipart from "@fastify/multipart";
 import { MenuItem } from "./menu-extractor";
 import { renderPdfPages } from "./pdf-renderer";
@@ -30,56 +29,6 @@ const start = async () => {
         status: "ok",
         application: "MenuMind API",
       };
-    });
-
-    app.post("/ai/test", async (request, reply) => {
-      try {
-        const body = request.body as { prompt?: string };
-
-        if (!body.prompt) {
-          return reply.status(400).send({
-            error: "El prompt es obligatorio",
-          });
-        }
-
-        const result = await askOllama(body.prompt);
-
-        return {
-          success: true,
-          response: result,
-        };
-      } catch (error) {
-        app.log.error(error);
-
-        return reply.status(500).send({
-          error: "No se pudo conectar con Ollama",
-        });
-      }
-    });
-
-    app.post("/menus/extract", async (request, reply) => {
-      try {
-        const body = request.body as { text?: string };
-
-        if (!body.text || !body.text.trim()) {
-          return reply.status(400).send({
-            error: "El texto del menú es obligatorio",
-          });
-        }
-
-        const result = await extractMenu(body.text);
-
-        return {
-          success: true,
-          menu: result,
-        };
-      } catch (error) {
-        app.log.error(error);
-
-        return reply.status(500).send({
-          error: "No se pudo extraer el menú",
-        });
-      }
     });
 
     app.post("/menus/save", async (request, reply) => {

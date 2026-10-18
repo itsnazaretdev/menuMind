@@ -58,10 +58,3 @@ export async function extractTextPagesFromPdf(
 
   return pages;
 }
-
-export async function extractTextFromPdf(
-  buffer: Buffer
-): Promise<string> {
-  const pages = await extractTextPagesFromPdf(buffer);
-  return pages.join("\n\n").trim();
-}

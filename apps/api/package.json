@@ -15,7 +15,6 @@
     "@fastify/multipart": "^10.1.4",
     "@napi-rs/canvas": "^1.0.11",
     "fastify": "^5.12.7",
-    "pdfjs-dist": "^6.4.299",
-    "tesseract.js": "^7.0.0"
+    "pdfjs-dist": "^6.4.299"
   }
 }
