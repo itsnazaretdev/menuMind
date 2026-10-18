@@ -245,7 +245,7 @@ items.push({
     app.get("/menus/:menuId", async (request, reply) => {
       try {
         const { menuId } = request.params as { menuId: string };
-
+        
         const menu = await prisma.menu.findUnique({
           where: {
             id: menuId,

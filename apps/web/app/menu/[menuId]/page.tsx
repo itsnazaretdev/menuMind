@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import MenuQRCode from "./MenuQRCode";
 
 interface MenuItem {
   id: string;
@@ -20,7 +21,7 @@ interface Menu {
   items: MenuItem[];
 }
 
-export default function PublicMenuPage() {
+function PublicMenuContent() { 
   const params = useParams<{ menuId: string }>();
   const menuId = params.menuId;
 
@@ -29,33 +30,35 @@ export default function PublicMenuPage() {
   const [error, setError] = useState("");
   const [language, setLanguage] = useState<"es" | "en">("es");
 
-  useEffect(() => {
-    async function loadMenu() {
-      try {
-        const response = await fetch(
-          `http://localhost:3001/menus/${encodeURIComponent(menuId)}`,
-        );
+  
+useEffect(() => {
+  async function loadMenu() {
+    try {
+      const response = await fetch(
+        `http://192.168.18.47:3001/menus/${encodeURIComponent(menuId)}`,
+      );
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (!response.ok || !data.success) {
-          throw new Error(data.error || "No se pudo cargar la carta.");
-        }
-
-        setMenu(data.menu);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Ha ocurrido un error al cargar la carta.",
-        );
-      } finally {
-        setLoading(false);
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "No se pudo cargar la carta.");
       }
-    }
 
-    loadMenu();
-  }, [menuId]);
+      setMenu(data.menu);
+    } catch (err) {
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Ha ocurrido un error al cargar la carta.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadMenu();
+}, [menuId]);
 
   const groupedItems = useMemo(() => {
     if (!menu) return [];
@@ -171,11 +174,20 @@ export default function PublicMenuPage() {
             </section>
           ))}
         </div>
+        <MenuQRCode menuId={menuId} />
 
         <footer className="mt-16 border-t border-[#E8E1D6] pt-6 text-center text-xs text-[#A49B8F]">
           Carta digital creada con MenuMind
         </footer>
       </section>
     </main>
+  );
+}
+
+export default function PublicMenuPage() {
+  return (
+    <Suspense fallback={<p className="p-8 text-center">Cargando carta...</p>}>
+      <PublicMenuContent />
+    </Suspense>
   );
 }
