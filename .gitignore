@@ -19,3 +19,6 @@ build/
 
 # Archivos subidos por usuarios
 storage/uploads/
+
+.env*.local
+*.db
