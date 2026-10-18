@@ -201,7 +201,7 @@ body: JSON.stringify({
           <h2 className="text-xl font-semibold">Empieza con tu carta</h2>
 
           <p className="mt-3 text-sm text-[#888276]">
-            Sube un PDF o una imagen de tu menú.
+            Sube un tu carta en formato PDF.
           </p>
 
           {/* Selector y procesamiento */}
