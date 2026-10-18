@@ -2,7 +2,11 @@
 
 Turn a restaurant's PDF menu into a bilingual (Spanish/English) digital menu that customers open by scanning a QR code, using **Gemma 3 4B** running locally through **Ollama**.
 
-MenuMind is built for small restaurants, cafés and bars that still rely on printed menus and need to offer them in more than one language without redoing documents every time something changes.
+MenuMind is built for small restaurants, cafés and bars that still rely on printed menus and need to offer them in more than one language.
+
+The PDF is only the way in: Gemma reads it so the owner doesn't have to retype every dish. What customers get is not the PDF but a structured menu that can be translated and read comfortably on a phone.
+
+The owner-facing interface is in Spanish, because it's designed first for restaurants in Spain. The public menu is bilingual for their customers.
 
 > Built for the [Hacktoberfest Open-Source AI Challenge, Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12). The project currently runs locally; there is no public deployment.
 
@@ -88,13 +92,18 @@ To scan the QR code from a phone, both devices must be on the same network:
 ## Current limitations
 
 - Only PDF menus are supported, and extraction works best with PDFs that have selectable text.
+- A saved menu can't be edited yet; changing a dish means uploading the menu again.
 - Translation is Spanish → English only.
+- The owner interface is available in Spanish only.
 - The API URLs are hardcoded for local development.
 - Everything runs locally; there is no hosted version yet.
 
 ## Next steps
 
+- Accept photos of printed menus, not only PDFs.
+- Edit dishes and prices directly on a saved menu.
 - OCR fallback for scanned PDFs.
+- Internationalize the owner interface (i18n), so restaurants outside Spain can use it, and translate menus into more languages.
 - Translate each category once, so the same section always gets the same English name.
 - Move the API URL to an environment variable.
 - Deploy the API, database and model so restaurants can use it without running anything themselves.
