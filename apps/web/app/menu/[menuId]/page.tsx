@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -7,8 +6,10 @@ import { useParams } from "next/navigation";
 interface MenuItem {
   id: string;
   name: string;
+  nameEn: string | null;
   price: number | null;
   category: string;
+  categoryEn: string | null;
   sortOrder: number;
 }
 
@@ -26,12 +27,13 @@ export default function PublicMenuPage() {
   const [menu, setMenu] = useState<Menu | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [language, setLanguage] = useState<"es" | "en">("es");
 
   useEffect(() => {
     async function loadMenu() {
       try {
         const response = await fetch(
-          `http://localhost:3001/menus/${encodeURIComponent(menuId)}`
+          `http://localhost:3001/menus/${encodeURIComponent(menuId)}`,
         );
 
         const data = await response.json();
@@ -45,7 +47,7 @@ export default function PublicMenuPage() {
         setError(
           err instanceof Error
             ? err.message
-            : "Ha ocurrido un error al cargar la carta."
+            : "Ha ocurrido un error al cargar la carta.",
         );
       } finally {
         setLoading(false);
@@ -61,13 +63,14 @@ export default function PublicMenuPage() {
     const groups = new Map<string, MenuItem[]>();
 
     menu.items.forEach((item) => {
-      const category = item.category || "Otros";
+      // Agrupamos siempre por la categoría original
+      const originalCategory = item.category || "Otros";
 
-      if (!groups.has(category)) {
-        groups.set(category, []);
+      if (!groups.has(originalCategory)) {
+        groups.set(originalCategory, []);
       }
 
-      groups.get(category)!.push(item);
+      groups.get(originalCategory)!.push(item);
     });
 
     return Array.from(groups.entries());
@@ -105,6 +108,29 @@ export default function PublicMenuPage() {
       </header>
 
       <section className="mx-auto max-w-3xl px-6 py-14 md:py-20">
+        <div className="mb-8 flex justify-center gap-2">
+          <button
+            onClick={() => setLanguage("es")}
+            className={`rounded-full px-5 py-2 text-sm transition ${
+              language === "es"
+                ? "bg-[#A5684D] text-white"
+                : "border border-[#DCCDBD] text-[#77766D]"
+            }`}
+          >
+            Español
+          </button>
+
+          <button
+            onClick={() => setLanguage("en")}
+            className={`rounded-full px-5 py-2 text-sm transition ${
+              language === "en"
+                ? "bg-[#A5684D] text-white"
+                : "border border-[#DCCDBD] text-[#77766D]"
+            }`}
+          >
+            English
+          </button>
+        </div>
         <div className="mb-12 text-center">
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-[#A5684D]">
             Nuestra carta
@@ -121,7 +147,7 @@ export default function PublicMenuPage() {
           {groupedItems.map(([category, items]) => (
             <section key={category}>
               <h2 className="mb-6 border-b border-[#DCCDBD] pb-3 font-serif text-2xl text-[#A5684D]">
-                {category}
+                {language === "en" ? items[0].categoryEn || category : category}
               </h2>
 
               <div className="space-y-6">
@@ -131,7 +157,7 @@ export default function PublicMenuPage() {
                     className="flex items-start justify-between gap-4"
                   >
                     <h3 className="font-medium leading-7">
-                      {item.name}
+                      {language === "en" ? item.nameEn || item.name : item.name}
                     </h3>
 
                     <span className="shrink-0 whitespace-nowrap font-medium">

@@ -88,8 +88,10 @@ const start = async () => {
           restaurant?: string;
           items?: Array<{
             name?: unknown;
+            nameEn?: unknown;
             price?: unknown;
             category?: unknown;
+            categoryEn?: unknown;
           }>;
         };
 
@@ -108,12 +110,16 @@ const start = async () => {
           });
         }
 
-        const items: {
-          name: string;
-          category: string;
-          price: number | null;
-          sortOrder: number;
-        }[] = [];
+        
+const items: {
+  name: string;
+  nameEn: string | null;
+  category: string;
+  categoryEn: string | null;
+  price: number | null;
+  sortOrder: number;
+}[] = [];
+
 
         for (let i = 0; i < body.items.length; i++) {
           const item = body.items[i];
@@ -139,12 +145,22 @@ const start = async () => {
             });
           }
 
-          items.push({
-            name,
-            category,
-            price,
-            sortOrder: i,
-          });
+          
+const nameEn =
+  typeof item.nameEn === "string" ? item.nameEn.trim() : null;
+
+const categoryEn =
+  typeof item.categoryEn === "string" ? item.categoryEn.trim() : null;
+
+items.push({
+  name,
+  nameEn,
+  category,
+  categoryEn,
+  price,
+  sortOrder: i,
+});
+
         }
 
         const menu = await prisma.$transaction(async (tx) => {
@@ -226,43 +242,41 @@ const start = async () => {
       }
     });
 
+    app.get("/menus/:menuId", async (request, reply) => {
+      try {
+        const { menuId } = request.params as { menuId: string };
 
-app.get("/menus/:menuId", async (request, reply) => {
-  try {
-    const { menuId } = request.params as { menuId: string };
-
-    const menu = await prisma.menu.findUnique({
-      where: {
-        id: menuId,
-      },
-      include: {
-        items: {
-          orderBy: {
-            sortOrder: "asc",
+        const menu = await prisma.menu.findUnique({
+          where: {
+            id: menuId,
           },
-        },
-      },
+          include: {
+            items: {
+              orderBy: {
+                sortOrder: "asc",
+              },
+            },
+          },
+        });
+
+        if (!menu || menu.status !== "confirmed") {
+          return reply.status(404).send({
+            error: "No se ha encontrado esta carta.",
+          });
+        }
+
+        return {
+          success: true,
+          menu,
+        };
+      } catch (error) {
+        request.log.error(error, "Error al recuperar la carta");
+
+        return reply.status(500).send({
+          error: "No se pudo recuperar la carta.",
+        });
+      }
     });
-
-    if (!menu || menu.status !== "confirmed") {
-      return reply.status(404).send({
-        error: "No se ha encontrado esta carta.",
-      });
-    }
-
-    return {
-      success: true,
-      menu,
-    };
-  } catch (error) {
-    request.log.error(error, "Error al recuperar la carta");
-
-    return reply.status(500).send({
-      error: "No se pudo recuperar la carta.",
-    });
-  }
-});
-
 
     app.post("/menus/upload-pdf", async (request, reply) => {
       try {

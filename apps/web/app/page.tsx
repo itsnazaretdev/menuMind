@@ -74,10 +74,16 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          restaurant: restaurantName,
-          items: menuItems,
-        }),
+        
+body: JSON.stringify({
+  restaurant: restaurantName,
+  items: menuItems.map((item, index) => ({
+    ...item,
+    nameEn: translatedItems[index]?.name ?? null,
+    categoryEn: translatedItems[index]?.category ?? null,
+  })),
+}),
+
       });
 
       const data = await response.json();

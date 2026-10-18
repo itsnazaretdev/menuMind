@@ -27,11 +27,14 @@ model Menu {
   items          MenuItem[]
 }
 
+
 model MenuItem {
   id        String  @id @default(cuid())
   name      String
+  nameEn    String?
   price     Float?
   category  String
+  categoryEn String?
   menuId    String
   menu      Menu    @relation(fields: [menuId], references: [id], onDelete: Cascade)
   sortOrder Int     @default(0)
